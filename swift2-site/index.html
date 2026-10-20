@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شركة صافي للحوالات المالية - نظام إدارة وتتبع السويفتات</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS (XLSX) for Import/Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        navy: {
+                            950: '#050914',
+                            900: '#0a1128',
+                            800: '#111d38',
+                            700: '#1c2a4f',
+                            600: '#283a66',
+                            500: '#394e85'
+                        },
+                        cyan: {
+                            400: '#22d3ee',
+                            500: '#06b6d4',
+                            600: '#0891b2'
+                        },
+                        purple: {
+                            400: '#c084fc',
+                            500: '#a855f7',
+                            600: '#9333ea'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #050914;
+            color: #f1f5f9;
+        }
+
+        /* Glassmorphism effects */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(28, 42, 79, 0.75) 0%, rgba(10, 17, 40, 0.85) 100%);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-card-cyan {
+            background: linear-gradient(135deg, rgba(28, 42, 79, 0.8) 0%, rgba(10, 17, 40, 0.95) 100%);
+            border: 1px solid rgba(6, 182, 212, 0.35);
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0a1128;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #283a66;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #394e85;
+        }
+
+        /* Glow effects */
+        .cyan-glow {
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+        }
+
+        /* Print Specific Styling */
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .glass-card {
+                background: #ffffff !important;
+                border: 1px solid #cccccc !important;
+                box-shadow: none !important;
+                color: #000000 !important;
+            }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                color: #000000 !important;
+            }
+            th, td {
+                border: 1px solid #000000 !important;
+                padding: 6px 8px !important;
+                color: #000000 !important;
+                font-size: 11px !important;
+            }
+            th {
+                background-color: #f0f0f0 !important;
+            }
+            .status-badge {
+                border: 1px solid #000 !important;
+                color: #000 !important;
+                background: transparent !important;
+            }
+        }
+
+        /* شاشة تسجيل الدخول */
+        #loginOverlay {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #050914;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .login-box {
+            background: rgba(10, 17, 40, 0.95);
+            border: 1px solid #1c2a4f;
+            width: 100%;
+            max-width: 340px;
+            padding: 28px 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            text-align: center;
+        }
+        .login-box h2 { margin: 0 0 6px; color: #22d3ee; font-weight: 900; font-size: 22px; }
+        .login-box p { margin: 0 0 18px; color: #94a3b8; font-size: 13px; }
+        .login-box input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #050914;
+            color: #e2e8f0;
+            border: 1px solid #1c2a4f;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            direction: ltr;
+            text-align: left;
+        }
+        .login-box input:focus { outline: none; border-color: #06b6d4; }
+        #loginError { color: #fb7185; font-size: 13px; min-height: 18px; margin-bottom: 6px; }
+        #loginBtn {
+            width: 100%;
+            padding: 12px;
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 800;
+            font-family: inherit;
+            color: #050914;
+            background: linear-gradient(135deg, #22d3ee, #0891b2);
+        }
+        #loginBtn:disabled { opacity: 0.6; cursor: wait; }
+        @media print { #loginOverlay { display: none !important; } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between custom-scrollbar selection:bg-cyan-500 selection:text-navy-950">
+
+    <!-- ================= LOGIN SCREEN ================= -->
+    <div id="loginOverlay">
+        <form id="loginForm" class="login-box" autocomplete="on">
+            <h2>تسجيل الدخول</h2>
+            <p>شركة صافي للحوالات المالية</p>
+            <input type="text" id="loginUser" name="username" placeholder="اسم المستخدم" autocomplete="username" required>
+            <input type="password" id="loginPass" name="password" placeholder="كلمة المرور" autocomplete="current-password" required>
+            <div id="loginError"></div>
+            <button type="submit" id="loginBtn">دخول</button>
+        </form>
+    </div>
+
+    <!-- ================= MAIN APP DASHBOARD ================= -->
+    <div id="mainDashboard" class="hidden min-h-screen flex flex-col justify-between">
+
+        <!-- Top Header -->
+        <header class="relative glass-card border-b border-navy-700/60 no-print z-20 sticky top-0 backdrop-blur-xl">
+            <div class="cyan-glow"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    
+                    <!-- Logo & Title -->
+                    <div class="flex items-center space-x-3.5 space-x-reverse">
+                        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 ring-2 ring-cyan-400/30">
+                            <i class="fa-solid font-bold fa-building-columns text-navy-950 text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h1 class="text-lg sm:text-xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-cyan-400 to-cyan-500">
+                                    شركة صافي للحوالات المالية
+                                </h1>
+                                <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full font-semibold">SAFI SWIFT</span>
+                            </div>
+                            <p class="text-xs text-slate-400 font-medium">نظام إدارة وتتبع السويفتات المالية</p>
+                        </div>
+                    </div>
+
+                    <!-- User Profile, Account Settings & Clock Bar -->
+                    <div class="flex items-center gap-2.5">
+                        <!-- Clock -->
+                        <div class="bg-navy-900/90 border border-navy-700/80 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs text-slate-300">
+                            <i class="fa-regular fa-clock text-cyan-400"></i>
+                            <span id="liveClock" class="font-mono">--:--:--</span>
+                        </div>
+
+                        <!-- Logged User Info -->
+                        <div class="bg-navy-900/90 border border-navy-700/80 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs text-slate-300">
+                            <div class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-[10px] font-bold">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <span>المستخدم: <strong id="activeUserDisplay" class="text-cyan-400">المدير</strong></span>
+                        </div>
+
+                        <!-- Logout Button -->
+                        <button onclick="handleLogout()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5" title="تسجيل الخروج">
+                            <i class="fa-solid fa-power-off text-[11px]"></i>
+                            <span class="hidden sm:inline">خروج</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </header>
+
+        <!-- Header specifically for PRINT view -->
+        <div class="hidden print-only p-4 text-center border-b border-black mb-4">
+            <h1 class="text-2xl font-bold">شركة صافي للحوالات المالية</h1>
+            <h2 class="text-lg">تقرير وتتبع حركة السويفتات المالية</h2>
+            <p class="text-sm text-gray-600">تاريخ التقرير: <span id="printDate"></span></p>
+        </div>
+
+        <!-- Main Container -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-grow">
+
+            <!-- Top Statistics Section -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 no-print">
+                <!-- Card 1: Total Transfers -->
+                <div class="glass-card rounded-2xl p-5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-navy-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">إجمالي السويفتات</p>
+                            <h3 id="statTotalCount" class="text-2xl sm:text-3xl font-extrabold text-slate-100 mt-1">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-slate-400">
+                        <span class="text-slate-300 font-medium">سجلات النظام بالكامل</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: In Progress -->
+                <div class="glass-card rounded-2xl p-5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-purple-500/50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">قيد التنفيذ</p>
+                            <h3 id="statInProgressCount" class="text-2xl sm:text-3xl font-extrabold text-purple-400 mt-1">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-arrows-rotate animate-spin" style="animation-duration: 8s;"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-purple-300/80">
+                        <i class="fa-solid fa-spinner text-[10px] ml-1"></i>
+                        <span>تنتظر معالجة البنوك الوسيطة</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Suspended / On Hold -->
+                <div class="glass-card rounded-2xl p-5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-rose-500/50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">السويفتات المعلقة</p>
+                            <h3 id="statSuspendedCount" class="text-2xl sm:text-3xl font-extrabold text-rose-400 mt-1">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-rose-300/80">
+                        <i class="fa-solid fa-circle-info text-[10px] ml-1"></i>
+                        <span>تتطلب تدقيق أو مطابقة بيانات</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: Completed Transfers -->
+                <div class="glass-card rounded-2xl p-5 relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px] hover:border-emerald-500/50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">تم الوصول (مكتمل)</p>
+                            <h3 id="statCompletedCount" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1">0</h3>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-emerald-300/80">
+                        <i class="fa-solid fa-check text-[10px] ml-1"></i>
+                        <span>تم تأكيد الوصول النهائي</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actions Toolbar (Buttons & Filters) -->
+            <section class="glass-card rounded-2xl p-4 sm:p-5 mb-6 no-print">
+                <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+                    
+                    <!-- Primary Action Buttons -->
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <button onclick="openAddModal()" class="px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-navy-950 font-black rounded-xl text-sm transition-all duration-200 shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                            <span>إضافة سويفت جديد</span>
+                        </button>
+
+                        <button onclick="exportToExcel()" class="px-3.5 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2">
+                            <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                            <span>تصدير Excel</span>
+                        </button>
+
+                        <label class="px-3.5 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer flex items-center gap-2">
+                            <i class="fa-solid fa-file-import text-blue-400"></i>
+                            <span>استيراد Excel</span>
+                            <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="importFromExcel(event)">
+                        </label>
+
+                        <button onclick="printTable()" class="px-3.5 py-2.5 bg-slate-700/50 hover:bg-slate-700 text-slate-200 border border-slate-600/50 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2">
+                            <i class="fa-solid fa-print text-slate-300"></i>
+                            <span>طباعة</span>
+                        </button>
+                    </div>
+
+                    <!-- Search & Status Filter -->
+                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                        
+                        <!-- Search Input -->
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="بحث باسم المرسل، المنفذ، الملاحظات..." class="w-full bg-navy-900/90 border border-navy-700 text-slate-100 placeholder-slate-500 text-xs rounded-xl pl-3 pr-9 py-2.5 focus:outline-none focus:border-cyan-500 transition-colors">
+                        </div>
+
+                        <!-- Filter Dropdown -->
+                        <div class="w-full sm:w-auto flex items-center gap-2">
+                            <label class="text-xs text-slate-400 whitespace-nowrap hidden sm:inline">الحالة:</label>
+                            <select id="statusFilter" onchange="applyFilters()" class="w-full sm:w-auto bg-navy-900/90 border border-navy-700 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-cyan-500 transition-colors">
+                                <option value="ALL">جميع الحالات</option>
+                                <option value="قيد التنفيذ">قيد التنفيذ</option>
+                                <option value="معلق">معلق</option>
+                                <option value="مكتمل">مكتمل (وصل)</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Main Data Table Card -->
+            <section class="glass-card rounded-2xl overflow-hidden shadow-2xl">
+                
+                <!-- Table Header Bar -->
+                <div class="px-6 py-4 border-b border-navy-700/80 flex items-center justify-between bg-navy-900/40 no-print">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-cyan-400 text-sm"></i>
+                        <h2 class="text-sm font-bold text-slate-200">سجل حركة وتتبع السويفتات</h2>
+                    </div>
+                    <span id="filteredCountText" class="text-xs font-semibold bg-navy-800 text-cyan-300/90 border border-navy-600 px-3 py-1 rounded-full">
+                        عرض 0 من أصل 0
+                    </span>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-right text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-navy-900/90 text-slate-400 uppercase text-[11px] font-bold border-b border-navy-700 tracking-wider">
+                                <th scope="col" class="py-3.5 px-4">#</th>
+                                <th scope="col" class="py-3.5 px-4">اسم المرسل</th>
+                                <th scope="col" class="py-3.5 px-4">اسم المنفذ</th>
+                                <th scope="col" class="py-3.5 px-4">المبلغ والعملة</th>
+                                <th scope="col" class="py-3.5 px-4">تاريخ الإرسال</th>
+                                <th scope="col" class="py-3.5 px-4">المتوقع للوصول</th>
+                                <th scope="col" class="py-3.5 px-4">تاريخ الوصول</th>
+                                <th scope="col" class="py-3.5 px-4 text-center">حالة السويفت</th>
+                                <th scope="col" class="py-3.5 px-4">ملاحظات</th>
+                                <th scope="col" class="py-3.5 px-4 text-center no-print">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="swiftTableBody" class="divide-y divide-navy-700/50 font-medium text-slate-200">
+                            <!-- Dynamic Content via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State Display -->
+                <div id="emptyState" class="hidden py-16 text-center">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-navy-800 border border-navy-700 flex items-center justify-center text-slate-500 text-2xl">
+                        <i class="fa-solid fa-inbox"></i>
+                    </div>
+                    <p class="text-slate-300 font-bold text-sm">لا توجد سويفتات مطابقة للبحث</p>
+                    <p class="text-slate-500 text-xs mt-1">تأكد من الفلتر أو اضف سويفت جديد بالنظام</p>
+                </div>
+
+            </section>
+
+        </main>
+
+        <!-- Footer with Trademark Branding -->
+        <footer class="glass-card border-t border-navy-700/80 py-6 mt-12 no-print relative z-10">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 text-xs text-slate-400">
+                        <i class="fa-solid fa-shield-halved text-cyan-400"></i>
+                        <span>نظام آمن ومحمي ومخصص لشركة صافي للحوالات المالية</span>
+                    </div>
+                    
+                    <!-- Trademark Watermark Signature -->
+                    <div class="flex items-center justify-center gap-2">
+                        <span class="text-xs text-slate-400">تطوير وتصميم:</span>
+                        <span class="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-500 border border-cyan-500/30 px-3 py-1 rounded-lg bg-cyan-500/5 shadow-inner">
+                            Abo7eyan ©
+                        </span>
+                        <span class="text-[10px] text-cyan-400/80 font-bold border border-cyan-500/20 px-2 py-0.5 rounded">علامة تجارية مسجلة</span>
+                    </div>
+
+                    <div class="text-xs text-slate-500">
+                        جميع الحقوق محفوظة &copy; <span id="yearSpan"></span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Modal for Adding / Editing Swift Transfers -->
+    <div id="swiftModal" class="fixed inset-0 z-50 bg-navy-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto no-print">
+        <div class="glass-card-cyan rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl transition-all border border-cyan-500/30 my-8">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-navy-900/90 border-b border-navy-700 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center">
+                        <i id="modalIcon" class="fa-solid fa-plus"></i>
+                    </div>
+                    <h3 id="modalTitle" class="text-base font-bold text-cyan-300">إضافة سويفت جديد</h3>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-rose-400 transition-colors p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form (ALL FIELDS OPTIONAL) -->
+            <form id="swiftForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editIndex" value="-1">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <!-- Sender Name -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">اسم المرسل / الجهة المرسلة (اختياري)</label>
+                        <input type="text" id="senderName" placeholder="مثال: شركة النور للتقنية" class="w-full bg-navy-900 border border-navy-700 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <!-- Executor Name -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">اسم المنفذ / الموظف المسؤول (اختياري)</label>
+                        <input type="text" id="executorName" placeholder="مثال: أحمد المحمد" class="w-full bg-navy-900 border border-navy-700 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <!-- Currency & Amount -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">المبلغ والعملة (اختياري)</label>
+                        <div class="flex gap-2">
+                            <input type="number" step="0.01" id="amount" placeholder="50000" class="w-full bg-navy-900 border border-navy-700 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-cyan-500">
+                            <select id="currency" class="bg-navy-900 border border-navy-700 text-cyan-400 font-bold text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-cyan-500">
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="AED">AED (د.إ)</option>
+                                <option value="SAR">SAR (ر.س)</option>
+                                <option value="TRY">TRY (₺)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Send Date -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">تاريخ الإرسال (اختياري)</label>
+                        <input type="date" id="sendDate" class="w-full bg-navy-900 border border-navy-700 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <!-- Expected Arrival Date -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">التاريخ المتوقع للوصول (اختياري)</label>
+                        <input type="date" id="expectedArrivalDate" class="w-full bg-navy-900 border border-navy-700 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <!-- Actual Arrival Date -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">تاريخ الوصول الفعلي (اختياري)</label>
+                        <input type="date" id="actualArrivalDate" class="w-full bg-navy-900 border border-navy-700 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <!-- Status -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">حالة السويفت</label>
+                        <select id="swiftStatus" class="w-full bg-navy-900 border border-navy-700 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-cyan-500">
+                            <option value="قيد التنفيذ">قيد التنفيذ (In Progress)</option>
+                            <option value="معلق">معلق (Suspended / On Hold)</option>
+                            <option value="مكتمل">مكتمل - وصل (Completed)</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">ملاحظات إضافية (اختياري)</label>
+                    <textarea id="notes" rows="2" placeholder="أدخل أي ملاحظات حول السويفت أو البنك الوسيط..." class="w-full bg-navy-900 border border-navy-700 text-slate-100 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-cyan-500 custom-scrollbar"></textarea>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-navy-700/80">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 font-semibold text-xs rounded-xl transition-colors">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-navy-950 font-black text-xs rounded-xl shadow-lg shadow-cyan-500/20 transition-all">
+                        حفظ السويفت
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation for Deleting Swift -->
+    <div id="deleteConfirmModal" class="fixed inset-0 z-50 bg-navy-950/80 backdrop-blur-md hidden flex items-center justify-center p-4 no-print">
+        <div class="glass-card rounded-2xl w-full max-w-sm p-6 text-center border border-rose-500/30 shadow-2xl">
+            <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-2xl">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-100 mb-1">تأكيد مسح السويفت</h3>
+            <p class="text-xs text-slate-400 mb-6">هل أنت تأكد من رغبتك في مسح هذا السويفت نهائياً؟ لا يمكن التراجع عن هذا الإجراء.</p>
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-navy-800 hover:bg-navy-700 text-slate-300 font-semibold text-xs rounded-xl transition-colors">
+                    إلغاء
+                </button>
+                <button id="confirmDeleteBtn" onclick="confirmDeleteAction()" class="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-rose-600/30 transition-all">
+                    تأكيد المسح
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Box -->
+    <div id="toastBox" class="fixed bottom-6 left-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toastContent" class="glass-card border border-cyan-500/40 rounded-xl px-4 py-3 shadow-2xl flex items-center gap-3 text-xs text-slate-100">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+            <span id="toastMessage">تم العملية بنجاح</span>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Initial Default Data
+        const initialSwifts = [
+            {
+                senderName: "شركة العالمية للتجارة",
+                executorName: "سامر القاسم",
+                amount: 125000,
+                currency: "USD",
+                sendDate: "2026-10-15",
+                expectedArrivalDate: "2026-10-18",
+                actualArrivalDate: "2026-10-18",
+                status: "مكتمل",
+                notes: "تم تأكيد الاستلام لدى بنك جافيستر عبر سويفت مطابق"
+            },
+            {
+                senderName: "مجموعة الأمل الصناعية",
+                executorName: "حسان العلي",
+                amount: 85000,
+                currency: "EUR",
+                sendDate: "2026-10-19",
+                expectedArrivalDate: "2026-10-22",
+                actualArrivalDate: "",
+                status: "قيد التنفيذ",
+                notes: "بانتظار موافقة البنك الوسيط في فرانكفورت"
+            },
+            {
+                senderName: "مؤسسة البركة للحلول",
+                executorName: "خالد الشامي",
+                amount: 340000,
+                currency: "AED",
+                sendDate: "2026-10-17",
+                expectedArrivalDate: "2026-10-20",
+                actualArrivalDate: "",
+                status: "معلق",
+                notes: "يحتاج تدقيق إضافي لرقم الحساب الآيبان المرسل"
+            },
+            {
+                senderName: "شركة الشرق الأوسط للأغذية",
+                executorName: "سامر القاسم",
+                amount: 50000,
+                currency: "USD",
+                sendDate: "2026-10-20",
+                expectedArrivalDate: "2026-10-23",
+                actualArrivalDate: "",
+                status: "قيد التنفيذ",
+                notes: "حوالة تغذية حساب فرع دبي"
+            }
+        ];
+
+        // Global States
+        let swifts = [];
+        let deleteTargetIndex = -1;
+        let currentUser = null;
+
+        // ===== تسجيل الدخول + التخزين المشترك على السيرفر =====
+        const API_URL = 'data.ashx';
+        const LEGACY_KEY = 'safi_swifts_data_v2';
+        let lastServerJson = '';
+        let savingCount = 0;
+        let lastSaveAt = 0;
+        let saveFailed = false;
+        let isAuthed = false;
+        let pollTimer = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            startLiveClock();
+            document.getElementById('yearSpan').textContent = new Date().getFullYear();
+            loadFromServer();
+            // تحديث تلقائي كل 10 ثواني
+            if (!pollTimer) pollTimer = setInterval(loadFromServer, 10000);
+        });
+
+        function showLogin(msg) {
+            isAuthed = false;
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('mainDashboard').classList.add('hidden');
+            document.getElementById('loginError').innerText = msg || '';
+            document.getElementById('loginPass').value = '';
+        }
+
+        function showDashboard() {
+            isAuthed = true;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('loginError').innerText = '';
+            if (currentUser) document.getElementById('activeUserDisplay').textContent = currentUser;
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            renderTable();
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const uname = document.getElementById('loginUser').value.trim();
+            btn.disabled = true;
+            const body = 'u=' + encodeURIComponent(uname) +
+                         '&p=' + encodeURIComponent(document.getElementById('loginPass').value);
+            fetch(API_URL + '?action=login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body
+            }).then(r => {
+                if (r.status === 401) throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
+                if (!r.ok) throw new Error('خطأ في السيرفر (' + r.status + ')');
+                currentUser = uname;
+                lastServerJson = '';
+                showDashboard();
+                if (saveFailed) { saveSwiftsData(); } else { loadFromServer(); }
+            }).catch(err => {
+                showLogin(err.message === 'Failed to fetch' ? 'تعذر الاتصال بالسيرفر' : err.message);
+            }).finally(() => { btn.disabled = false; });
+        });
+
+        function handleLogout() {
+            fetch(API_URL + '?action=logout', { method: 'POST' }).finally(() => {
+                currentUser = null;
+                swifts = [];
+                lastServerJson = '';
+                saveFailed = false;
+                showLogin('');
+                showToast("تم تسجيل الخروج بنجاح", "info");
+            });
+        }
+
+        function anyModalOpen() {
+            return ['swiftModal', 'deleteConfirmModal'].some(id => {
+                const el = document.getElementById(id);
+                return el && !el.classList.contains('hidden');
+            });
+        }
+
+        // تحميل البيانات من السيرفر (مشتركة بين كل الأجهزة)
+        function loadFromServer() {
+            // لا تحدّث أثناء الحفظ، أو بعد فشل الحفظ، أو أثناء فتح نافذة تعديل/حذف (حتى لا تتبدّل المواقع)
+            if (savingCount > 0 || saveFailed || anyModalOpen() || Date.now() - lastSaveAt < 3000) return Promise.resolve();
+            return fetch(API_URL + '?_=' + Date.now(), { cache: 'no-store' })
+                .then(r => {
+                    if (r.status === 401) { showLogin(''); return null; }
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    if (!isAuthed) showDashboard();
+                    return r.text();
+                })
+                .then(txt => {
+                    if (txt === null) return;
+                    txt = (txt || '').trim();
+                    if (!txt) {
+                        // السيرفر فاضي: خذ البيانات القديمة من هذا المتصفح إن وجدت، وإلا البيانات الافتراضية
+                        let seed = null;
+                        try { seed = JSON.parse(localStorage.getItem(LEGACY_KEY) || 'null'); } catch (e) {}
+                        swifts = Array.isArray(seed) ? seed : [...initialSwifts];
+                        saveSwiftsData();
+                        renderTable();
+                        return;
+                    }
+                    if (txt === lastServerJson) return;
+                    const d = JSON.parse(txt);
+                    if (!Array.isArray(d)) return;
+                    lastServerJson = txt;
+                    swifts = d;
+                    renderTable();
+                })
+                .catch(e => console.error('load failed', e));
+        }
+
+        function saveSwiftsData() {
+            const payload = JSON.stringify(swifts);
+            lastServerJson = payload;
+            savingCount++;
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload
+            }).then(r => r.text().then(t => {
+                if (r.status === 401) {
+                    saveFailed = true;
+                    showLogin('انتهت الجلسة، سجّل الدخول من جديد لحفظ تعديلاتك');
+                    return;
+                }
+                if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + t.slice(0, 200));
+                saveFailed = false;
+            })).catch(err => {
+                saveFailed = true;
+                alert('تعذر حفظ التعديلات على السيرفر، ولن تظهر للموظفين الآخرين.\nالسبب: ' + err.message);
+            }).finally(() => {
+                savingCount--;
+                lastSaveAt = Date.now();
+            });
+        }
+
+        // Live Clock Tracker
+        function startLiveClock() {
+            const updateClock = () => {
+                const now = new Date();
+                document.getElementById('liveClock').textContent = now.toLocaleTimeString('ar-EG');
+            };
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // Render Table & Statistics
+        function renderTable() {
+            const tableBody = document.getElementById('swiftTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+            const statusFilterVal = document.getElementById('statusFilter').value;
+
+            // Filtering logic
+            const filtered = swifts.filter(item => {
+                const matchesStatus = (statusFilterVal === 'ALL') || (item.status === statusFilterVal);
+                const matchesSearch = 
+                    (item.senderName && item.senderName.toLowerCase().includes(searchVal)) ||
+                    (item.executorName && item.executorName.toLowerCase().includes(searchVal)) ||
+                    (item.notes && item.notes.toLowerCase().includes(searchVal));
+                
+                return matchesStatus && matchesSearch;
+            });
+
+            // Update Counts Indicator
+            document.getElementById('filteredCountText').textContent = `عرض ${filtered.length} من أصل ${swifts.length}`;
+
+            // Render Rows
+            tableBody.innerHTML = '';
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                
+                filtered.forEach((item, index) => {
+                    const originalIndex = swifts.indexOf(item);
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-navy-800/50 transition-colors border-b border-navy-700/40";
+
+                    // Status Badge Styling
+                    let statusBadgeClass = '';
+                    let statusIcon = '';
+                    if (item.status === 'قيد التنفيذ') {
+                        statusBadgeClass = 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+                        statusIcon = 'fa-solid fa-arrows-rotate animate-spin';
+                    } else if (item.status === 'معلق') {
+                        statusBadgeClass = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+                        statusIcon = 'fa-solid fa-triangle-exclamation';
+                    } else {
+                        statusBadgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+                        statusIcon = 'fa-solid fa-check';
+                    }
+
+                    tr.innerHTML = `
+                        <td class="py-3.5 px-4 font-mono font-bold text-slate-500 text-xs">${originalIndex + 1}</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-100">${escapeHtml(item.senderName) || '<span class="text-slate-600">-</span>'}</td>
+                        <td class="py-3.5 px-4 text-slate-300">${escapeHtml(item.executorName) || '<span class="text-slate-600">-</span>'}</td>
+                        <td class="py-3.5 px-4 font-bold font-mono text-slate-100 whitespace-nowrap">
+                            ${item.amount ? formatNumber(item.amount) : '0'} <span class="text-cyan-400 text-xs">${item.currency || 'USD'}</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-400 font-mono text-xs">${item.sendDate || '<span class="text-slate-600">-</span>'}</td>
+                        <td class="py-3.5 px-4 text-slate-400 font-mono text-xs">${item.expectedArrivalDate || '<span class="text-slate-600">-</span>'}</td>
+                        <td class="py-3.5 px-4 font-mono text-xs ${item.actualArrivalDate ? 'text-emerald-400 font-semibold' : 'text-slate-500'}">
+                            ${item.actualArrivalDate || 'غير محدد'}
+                        </td>
+                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                            <button onclick="quickToggleStatus(${originalIndex})" title="انقر لتغيير الحالة سريعاً" class="status-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-transform hover:scale-105 ${statusBadgeClass}">
+                                <i class="${statusIcon} text-[10px]"></i>
+                                <span>${item.status || 'قيد التنفيذ'}</span>
+                            </button>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-400 text-xs max-w-xs truncate" title="${escapeHtml(item.notes || '')}">
+                            ${escapeHtml(item.notes || '-')}
+                        </td>
+                        <td class="py-3.5 px-4 text-center no-print whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="editSwift(${originalIndex})" class="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-colors" title="تعديل">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="openDeleteModal(${originalIndex})" class="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg transition-colors" title="مسح">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            updateStatistics();
+        }
+
+        // Quick Toggle Swift Status
+        function quickToggleStatus(index) {
+            const current = swifts[index].status || 'قيد التنفيذ';
+            if (current === 'قيد التنفيذ') {
+                swifts[index].status = 'معلق';
+            } else if (current === 'معلق') {
+                swifts[index].status = 'مكتمل';
+                if (!swifts[index].actualArrivalDate) {
+                    swifts[index].actualArrivalDate = new Date().toISOString().split('T')[0];
+                }
+            } else {
+                swifts[index].status = 'قيد التنفيذ';
+            }
+            saveSwiftsData();
+            renderTable();
+            showToast(`تم تغيير حالة السويفت إلى: ${swifts[index].status}`);
+        }
+
+        // Update High-Level Statistic Cards
+        function updateStatistics() {
+            document.getElementById('statTotalCount').textContent = swifts.length;
+            
+            const inProgress = swifts.filter(i => i.status === 'قيد التنفيذ').length;
+            const suspended = swifts.filter(i => i.status === 'معلق').length;
+            const completed = swifts.filter(i => i.status === 'مكتمل').length;
+
+            document.getElementById('statInProgressCount').textContent = inProgress;
+            document.getElementById('statSuspendedCount').textContent = suspended;
+            document.getElementById('statCompletedCount').textContent = completed;
+        }
+
+        // Filter Action
+        function applyFilters() {
+            renderTable();
+        }
+
+        // Form & Modal Controls
+        function openAddModal() {
+            document.getElementById('editIndex').value = "-1";
+            document.getElementById('modalTitle').textContent = "إضافة سويفت جديد";
+            document.getElementById('modalIcon').className = "fa-solid fa-plus";
+            document.getElementById('swiftForm').reset();
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('sendDate').value = today;
+
+            document.getElementById('swiftModal').classList.remove('hidden');
+        }
+
+        function editSwift(index) {
+            const item = swifts[index];
+            document.getElementById('editIndex').value = index;
+            document.getElementById('modalTitle').textContent = "تعديل بيانات السويفت";
+            document.getElementById('modalIcon').className = "fa-solid fa-pen-to-square";
+
+            document.getElementById('senderName').value = item.senderName || '';
+            document.getElementById('executorName').value = item.executorName || '';
+            document.getElementById('amount').value = item.amount || '';
+            document.getElementById('currency').value = item.currency || 'USD';
+            document.getElementById('sendDate').value = item.sendDate || '';
+            document.getElementById('expectedArrivalDate').value = item.expectedArrivalDate || '';
+            document.getElementById('actualArrivalDate').value = item.actualArrivalDate || '';
+            document.getElementById('swiftStatus').value = item.status || 'قيد التنفيذ';
+            document.getElementById('notes').value = item.notes || '';
+
+            document.getElementById('swiftModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('swiftModal').classList.add('hidden');
+        }
+
+        // Submit Form Handler (All Fields Optional)
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const index = parseInt(document.getElementById('editIndex').value);
+            const amtVal = document.getElementById('amount').value;
+
+            const swiftObj = {
+                senderName: document.getElementById('senderName').value.trim(),
+                executorName: document.getElementById('executorName').value.trim(),
+                amount: amtVal !== '' ? parseFloat(amtVal) : 0,
+                currency: document.getElementById('currency').value,
+                sendDate: document.getElementById('sendDate').value,
+                expectedArrivalDate: document.getElementById('expectedArrivalDate').value,
+                actualArrivalDate: document.getElementById('actualArrivalDate').value,
+                status: document.getElementById('swiftStatus').value,
+                notes: document.getElementById('notes').value.trim()
+            };
+
+            if (index === -1) {
+                swifts.unshift(swiftObj);
+                showToast("تمت إضافة السويفت بنجاح");
+            } else {
+                swifts[index] = swiftObj;
+                showToast("تم تحديث بيانات السويفت بنجاح");
+            }
+
+            saveSwiftsData();
+            renderTable();
+            closeModal();
+        }
+
+        // DELETE SWIFT FUNCTIONALITY
+        function openDeleteModal(index) {
+            deleteTargetIndex = index;
+            document.getElementById('deleteConfirmModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            deleteTargetIndex = -1;
+            document.getElementById('deleteConfirmModal').classList.add('hidden');
+        }
+
+        function confirmDeleteAction() {
+            if (deleteTargetIndex >= 0 && deleteTargetIndex < swifts.length) {
+                swifts.splice(deleteTargetIndex, 1);
+                saveSwiftsData();
+                renderTable();
+                showToast("تم مسح السويفت بنجاح");
+            }
+            closeDeleteModal();
+        }
+
+        // Excel Export Feature using SheetJS
+        function exportToExcel() {
+            if (swifts.length === 0) {
+                showToast("لا توجد بيانات لتصديرها", "warning");
+                return;
+            }
+
+            const exportData = swifts.map((item, idx) => ({
+                "ت": idx + 1,
+                "اسم المرسل": item.senderName || "-",
+                "اسم المنفذ": item.executorName || "-",
+                "المبلغ": item.amount || 0,
+                "العملة": item.currency || "USD",
+                "تاريخ الإرسال": item.sendDate || "-",
+                "التاريخ المتوقع للوصول": item.expectedArrivalDate || "-",
+                "تاريخ الوصول الفعلي": item.actualArrivalDate || "غير محدد",
+                "الحالة": item.status || "قيد التنفيذ",
+                "الملاحظات": item.notes || ""
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "السويفتات");
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(workbook, `شركة_صافي_سويفتات_${dateStr}.xlsx`);
+            showToast("تم تصدير ملف Excel بنجاح");
+        }
+
+        // Excel Import Feature
+        function importFromExcel(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (jsonData.length === 0) {
+                        showToast("الملف الذي تم رفعه فارغ", "warning");
+                        return;
+                    }
+
+                    let addedCount = 0;
+                    jsonData.forEach(row => {
+                        swifts.unshift({
+                            senderName: row["اسم المرسل"] || row["senderName"] || "",
+                            executorName: row["اسم المنفذ"] || row["executorName"] || "",
+                            amount: parseFloat(row["المبلغ"] || row["amount"] || 0),
+                            currency: row["العملة"] || row["currency"] || "USD",
+                            sendDate: row["تاريخ الإرسال"] || row["sendDate"] || "",
+                            expectedArrivalDate: row["التاريخ المتوقع للوصول"] || row["expectedArrivalDate"] || "",
+                            actualArrivalDate: row["تاريخ الوصول الفعلي"] || row["actualArrivalDate"] || "",
+                            status: row["الحالة"] || row["status"] || "قيد التنفيذ",
+                            notes: row["الملاحظات"] || row["notes"] || ""
+                        });
+                        addedCount++;
+                    });
+
+                    saveSwiftsData();
+                    renderTable();
+                    showToast(`تم استيراد ${addedCount} سويفت بنجاح من Excel`);
+                } catch (err) {
+                    showToast("حدث خطأ أثناء قراءة ملف Excel", "warning");
+                }
+                e.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Print Functionality
+        function printTable() {
+            document.getElementById('printDate').textContent = new Date().toLocaleString('ar-EG');
+            window.print();
+        }
+
+        // Helper Functions
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US').format(num);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toastBox');
+            const toastMsg = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.textContent = message;
+            if (type === "warning") {
+                toastIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-base";
+            } else if (type === "info") {
+                toastIcon.className = "fa-solid fa-circle-info text-cyan-400 text-base";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-base";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
