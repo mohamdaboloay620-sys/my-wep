@@ -1,7 +1,7 @@
 {
+ 
   "name": "safi-swift-tracker",
   "version": "1.0.0",
   "private": true,
-  "description": "نظام تتبع السويفتات - شركة صافي للحوالات المالية",
-  "engines": { "node": "20.x" }
+  "description": "نظام تتبع السويفتات - شركة صافي للحوالات المالية"
 }
